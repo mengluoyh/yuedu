@@ -1,42 +1,44 @@
-{
-    "bookSourceComment": "包子漫画官方源优化版\n1. 集成自动Referer绕过图片防盗链\n2. 目录已做正序处理（第1话在前）\n3. 搜索结果支持封面显示",
-    "bookSourceGroup": "漫画",
-    "bookSourceName": "包子漫画(BZ)",
-    "bookSourceType": 2,
-    "bookSourceUrl": "https://bzmh.org",
-    "customOrder": 0,
-    "enabled": true,
-    "enabledCookieJar": true,
-    "enabledExplore": true,
-    "exploreUrl": "",
-    "header": "{\n  \"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36\",\n  \"Referer\": \"https://bzmh.org/\"\n}",
-    "lastUpdateTime": 1777306602001,
-    "respondTime": 180000,
-    "ruleBookInfo": {
-        "author": "a[href^='/manga-author/'] span@text",
-        "coverUrl": "img[src*='cncover.godamanga.online']@src",
-        "intro": "#info p.line-clamp-4@text",
-        "kind": "a[href^='/manga-genre/'] span@text&&a[href^='/manga-tag/'] span@text",
-        "lastChapter": "#lastchap@text",
-        "name": "h1@text##\\s*\\n.*",
-        "tocUrl": "@js:\nlet mid = String(result).match(/data-mid=\"(\\d+)\"/)[1];\njava.put(\"mid\", mid); // 压入内存，章节URL生成需要用到\n\"https://api-get-v3.mgsearcher.com/api/manga/get?mid=\" + mid + \"&mode=all\";"
-    },
-    "ruleContent": {
-        "content": "@js:\nlet json = JSON.parse(result);\nlet images = json.data.info.images.images; // 定位到 JSON 中的图片数组\nlet imgTags = [];\n\n// 如果 JSON 没带域名前缀，包子漫画 V3 接口的默认主域名通常是下方这个\nlet host = json.data.info.domain || \"https://f40-1-4.g-mh.online\"; \n\nfor (let i = 0; i < images.length; i++) {\n    let imgUrl = images[i].url;\n    // 有些接口返回的是绝对路径，有些是相对路径，要做个兼容判断\n    if (!imgUrl.startsWith(\"http\")) {\n        imgUrl = host + imgUrl;\n    }\n    imgTags.push('<img src=\"' + imgUrl + '\">');\n}\n\n// 用换行符拼接所有 img 标签，交给底层阅读引擎排版渲染\nimgTags.join('\\n');"
-    },
-    "ruleExplore": {},
-    "ruleSearch": {
-        "bookList": ".cardlist > div.pb-2",
-        "bookUrl": "a@href",
-        "checkKeyWord": "万界守门人",
-        "coverUrl": "img.card@src",
-        "name": "h3@text"
-    },
-    "ruleToc": {
-        "chapterList": "@js:\nlet json = JSON.parse(result);\n// 兼容多版本 API 字段格式\nlet list = json.data.chapters || json.data.info.chapters || [];\n// 删掉了 .reverse()，不进行物理内存反转，直接遍历序列化\nlist.map(item => JSON.stringify(item));",
-        "chapterName": "@js: \nlet obj = JSON.parse(result);\n// 穷举常见的包子漫画键名。如果都不对，直接把这个对象的 JSON 源码打印成章节名！\nobj.name || obj.title || obj.chapter_name || obj.chapter_title || (obj.attributes && obj.attributes.title) || JSON.stringify(obj);",
-        "chapterUrl": "@js:\nlet obj = JSON.parse(result);\nlet mid = java.get(\"mid\");\n// 注意这里改成了 v3，并兼容了 id 和 chapter_id 两种可能的键名\nlet cid = obj.id || obj.chapter_id; \n\"https://api-get-v3.mgsearcher.com/api/chapter/getinfo?m=\" + mid + \"&c=\" + cid;"
-    },
-    "searchUrl": "https://bzmh.org/s/{{key}}&page={{page}}",
-    "weight": 0
-}
+[
+    {
+        "bookSourceComment": "包子漫画官方源优化版\n1. 集成自动Referer绕过图片防盗链\n2. 目录已做正序处理（第1话在前）\n3. 搜索结果支持封面显示",
+        "bookSourceGroup": "漫画",
+        "bookSourceName": "包子漫画(BZ)",
+        "bookSourceType": 2,
+        "bookSourceUrl": "https://bzmh.org",
+        "customOrder": 0,
+        "enabled": true,
+        "enabledCookieJar": true,
+        "enabledExplore": true,
+        "exploreUrl": "",
+        "header": "{\n  \"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36\",\n  \"Referer\": \"https://bzmh.org/\"\n}",
+        "lastUpdateTime": 1777306602001,
+        "respondTime": 180000,
+        "ruleBookInfo": {
+            "author": "a[href^='/manga-author/'] span@text",
+            "coverUrl": "img[src*='cncover.godamanga.online']@src",
+            "intro": "#info p.line-clamp-4@text",
+            "kind": "a[href^='/manga-genre/'] span@text&&a[href^='/manga-tag/'] span@text",
+            "lastChapter": "#lastchap@text",
+            "name": "h1@text##\\s*\\n.*",
+            "tocUrl": "@js:\nlet mid = String(result).match(/data-mid=\"(\\d+)\"/)[1];\njava.put(\"mid\", mid); // 压入内存，章节URL生成需要用到\n\"https://api-get-v3.mgsearcher.com/api/manga/get?mid=\" + mid + \"&mode=all\";"
+        },
+        "ruleContent": {
+            "content": "@js:\nlet json = JSON.parse(result);\nlet images = json.data.info.images.images; // 定位到 JSON 中的图片数组\nlet imgTags = [];\n\n// 如果 JSON 没带域名前缀，包子漫画 V3 接口的默认主域名通常是下方这个\nlet host = json.data.info.domain || \"https://f40-1-4.g-mh.online\"; \n\nfor (let i = 0; i < images.length; i++) {\n    let imgUrl = images[i].url;\n    // 有些接口返回的是绝对路径，有些是相对路径，要做个兼容判断\n    if (!imgUrl.startsWith(\"http\")) {\n        imgUrl = host + imgUrl;\n    }\n    imgTags.push('<img src=\"' + imgUrl + '\">');\n}\n\n// 用换行符拼接所有 img 标签，交给底层阅读引擎排版渲染\nimgTags.join('\\n');"
+        },
+        "ruleExplore": {},
+        "ruleSearch": {
+            "bookList": ".cardlist > div.pb-2",
+            "bookUrl": "a@href",
+            "checkKeyWord": "万界守门人",
+            "coverUrl": "img.card@src",
+            "name": "h3@text"
+        },
+        "ruleToc": {
+            "chapterList": "@js:\nlet json = JSON.parse(result);\n// 兼容多版本 API 字段格式\nlet list = json.data.chapters || json.data.info.chapters || [];\n// 删掉了 .reverse()，不进行物理内存反转，直接遍历序列化\nlist.map(item => JSON.stringify(item));",
+            "chapterName": "@js: \nlet obj = JSON.parse(result);\n// 穷举常见的包子漫画键名。如果都不对，直接把这个对象的 JSON 源码打印成章节名！\nobj.name || obj.title || obj.chapter_name || obj.chapter_title || (obj.attributes && obj.attributes.title) || JSON.stringify(obj);",
+            "chapterUrl": "@js:\nlet obj = JSON.parse(result);\nlet mid = java.get(\"mid\");\n// 注意这里改成了 v3，并兼容了 id 和 chapter_id 两种可能的键名\nlet cid = obj.id || obj.chapter_id; \n\"https://api-get-v3.mgsearcher.com/api/chapter/getinfo?m=\" + mid + \"&c=\" + cid;"
+        },
+        "searchUrl": "https://bzmh.org/s/{{key}}&page={{page}}",
+        "weight": 0
+    }
+]
