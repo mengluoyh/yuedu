@@ -1,0 +1,50 @@
+[
+    {
+        "bookSourceGroup": "动漫",
+        "bookSourceName": "饭团动漫",
+        "bookSourceType": 0,
+        "bookSourceUrl": "https://acgfta.com/",
+        "customOrder": 0,
+        "enabled": true,
+        "enabledCookieJar": true,
+        "enabledExplore": true,
+        "exploreUrl": "主页::https://acgfta.com/\n最近更新::https://acgfta.com/ft/recent.html\n剧场版::https://acgfta.com/ft/top-movie.html",
+        "header": "{\n  \"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36 Edg/99.0.1150.55\"\n}",
+        "lastUpdateTime": 1777972067269,
+        "loginCheckJs": "",
+        "loginUrl": "",
+        "respondTime": 180000,
+        "ruleBookInfo": {
+            "coverUrl": ".anime-cover@data-src@src",
+            "intro": ".detail-anime-intro@text",
+            "name": ".detail-anime-title@text",
+            "tocUrl": "{{baseUrl}}"
+        },
+        "ruleContent": {
+            "content": "@js:\ntry {\n    // 1. 解析当前网页的视频直链\n    const jsonStr = result.split('var player_aaaa=')[1].split('</script>')[0].trim().replace(/;$/, \"\");\n    const data = JSON.parse(jsonStr);\n    let m3u8 = data.url;\n    \n    if (data.encrypt == 1) { \n        m3u8 = unescape(m3u8); \n    } else if (data.encrypt == 2) { \n        m3u8 = unescape(atob(m3u8)); \n    }\n    \n    // 2. 校验并调用第三方播放器接口\n    if (!m3u8 || m3u8 === \"\") {\n        \"未获取到视频地址\";\n    } else {\n        const qianqiApi = \"https://api.qianqi.net/vip/?url=\";\n        const playUrl = qianqiApi + java.encodeURI(m3u8);\n        \n        // 核心突破：直接调用开源阅读的浏览器接口强行弹窗播放\n        java.startBrowserAwait(playUrl, book.name);\n        \n        // 唤起播放器后，正文显示为空即可，避免多余渲染\n        \"\"; \n    }\n} catch (err) {\n    \"代码执行/解析失败: \" + err.message;\n}",
+            "replaceRegex": "",
+            "webJs": ""
+        },
+        "ruleExplore": {
+            "bookList": ".anime-card",
+            "bookUrl": ".stretched-link@href",
+            "coverUrl": ".anime-cover@data-src",
+            "name": ".stretched-link@text"
+        },
+        "ruleSearch": {
+            "bookList": ".anime-card",
+            "bookUrl": ".stretched-link@href",
+            "checkKeyWord": "怪兽8号",
+            "coverUrl": ".anime-cover@data-src@src",
+            "lastChapter": "",
+            "name": ".stretched-link@text"
+        },
+        "ruleToc": {
+            "chapterList": ".anime-episode@a",
+            "chapterName": "text",
+            "chapterUrl": "href"
+        },
+        "searchUrl": "https://acgfta.com/search.html?wd={{key}}&page={{page}}",
+        "weight": 0
+    }
+]
