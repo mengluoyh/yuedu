@@ -1,0 +1,57 @@
+[
+    {
+        "bookSourceGroup": "听书",
+        "bookSourceName": "听友FM",
+        "bookSourceType": 0,
+        "bookSourceUrl": "https://www.tingyou.fm/",
+        "customOrder": 0,
+        "enabled": true,
+        "enabledCookieJar": false,
+        "enabledExplore": true,
+        "exploreUrl": "@js:\n(function() {\n    try {\n        // 1. 请求首页获取最新的分类列表\n        var res = java.ajax(\"https://www.tingyou.fm/\");\n        var doc = org.jsoup.Jsoup.parse(res);\n        \n        // 2. 找到分类入口的 a 标签\n        var tags = doc.select(\".category-entry__tag\");\n        var discovery = [];\n        \n        for (var i = 0; i < tags.size(); i++) {\n            var tag = tags.get(i);\n            // 提取分类名称（如：玄幻奇幻）\n            var name = tag.select(\".category-entry__tag-name\").text();\n            // 提取分类链接（如：/categories/46）\n            var href = tag.attr(\"href\");\n            \n            if (name && href) {\n                // 3. 按照“阅读”App 要求的格式拼接：名称::链接\n                // 加上 sort=comprehensive (综合排序) 和分页占位符\n                var url = \"https://www.tingyou.fm\" + href + \"?sort=comprehensive&page={{page}}\";\n                discovery.push(name + \"::\" + url);\n            }\n        }\n        \n        // 4. 将数组合并为换行符分隔的字符串返回\n        return discovery.join(\"\\n\");\n    } catch (e) {\n        // 容错处理，如果自动抓取失败，返回一个基础的\n        return \"玄幻奇幻::https://www.tingyou.fm/categories/46?page={{page}}\";\n    }\n})()",
+        "header": "{\n  \"User-Agent\": \"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36\",\n  \"authorization\": \"Bearer gAAAAABp-_HVXatwQlVIDdnqYFK4nZatTVlPn47a6DF2pTBCELmQXHUrvIp_bHBZSDhDGJKvhqRGnN5SmZ7fAe-JbU58d58EQuOx_WUgoVqsxuuuHQdjPekvhA8q5FwZfB07F6RulEUJ4s-PJlNbuTI2ySGbWDy4RSw6wLL7BC2Sh75NUnNV3ljGLXid_slAvW3cHbdAZ_mqT2zLF4CyiYAPFkWKOLK_455CMM67IxtjJlKTNtzn_UiEvW822gB8rqWv9V8m_egB9q7gvF41bx9aJW056t-cUA==\",\n  \"Referer\": \"https://www.tingyou.fm/\"\n}",
+        "lastUpdateTime": 1778121647645,
+        "respondTime": 180000,
+        "ruleBookInfo": {
+            "author": ".pods span:matches(作者)@text##作者:\\s*",
+            "coverUrl": "meta[property=\"og:image\"]@content",
+            "intro": "meta[property=\"og:description\"]@content",
+            "kind": ".pods span:matches(分类)@text##分类:\\s*",
+            "lastChapter": ".chapters-title@text",
+            "name": "h1.title@text",
+            "tocUrl": "",
+            "wordCount": ""
+        },
+        "ruleContent": {
+            "content": "@js:\n(function() {\n    try {\n        var html = String(result);\n        \n        // 1. 全局搜索并提取“动态通行证” (Bearer Token)\n        var tokenMatch = html.match(/(gAAAAA[a-zA-Z0-9-_=]+)/);\n        \n        if (tokenMatch) {\n            var token = \"Bearer \" + tokenMatch[1];\n            java.log(\"🔑 成功挖出通行证: \" + token);\n            \n            // 2. 尝试模拟抓包看到的 API 发送请求\n            var chapterId = baseUrl.split('/').pop(); \n            \n            var requestObj = {\n                \"url\": \"https://www.tingyou.fm/api/play_token\",\n                \"method\": \"POST\",\n                \"headers\": {\n                    \"authorization\": token,\n                    \"x-payload-version\": \"1\",\n                    \"Referer\": baseUrl,\n                    \"User-Agent\": \"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36\",\n                    \"Origin\": \"https://www.tingyou.fm\",\n                    \"content-type\": \"text/plain\"\n                },\n                // 尝试发送基础 ID 测试服务器容忍度\n                \"body\": chapterId \n            };\n            \n            // 让开源阅读代为发送请求\n            var apiRes = java.ajax(JSON.stringify(requestObj));\n            java.log(\"🌐 API 接口返回数据: \" + apiRes);\n            \n            // 如果服务器下发了包含 file.hgeuz.cn 的链接，直接拦截返回！\n            var streamMatch = apiRes.match(/(https:\\/\\/file\\.hgeuz\\.cn\\/stream\\/[^\"'\\s\\\\]+)/);\n            if(streamMatch) {\n                java.log(\"🎯 API 拦截成功！\");\n                return streamMatch[1] + \"#.mp3\";\n            }\n        }\n        \n        // =======================================================\n        // 3. 终极防线：强启阅读 App 内置浏览器播放\n        // =======================================================\n        java.log(\"⚠️ API 提取失败，正在强行唤起内置浏览器加载流媒体...\");\n        java.startBrowserAwait(baseUrl, \"听友FM - 正在加载\");\n        \n        return \"💡 正在后台浏览器解析音频，请稍候...\";\n        \n    } catch (e) {\n        return \"代码运行异常: \" + e.message;\n    }\n})()",
+            "sourceRegex": "",
+            "webJs": ""
+        },
+        "ruleExplore": {
+            "author": "author",
+            "bookList": "@js:\n(function() {\n    try {\n        const html = String(result);\n        const match = html.match(/id=\"__NUXT_DATA__\"[^>]*>([\\s\\S]+?)<\\/script>/);\n        if (!match) return [];\n        const data = JSON.parse(match[1]);\n\n        // 指针还原函数\n        const getV = (idx) => (idx !== null && idx !== undefined) ? data[idx] : \"\";\n\n        let bookListIndices = [];\n\n        // --- 全自动寻址逻辑 ---\n        for (let i = 0; i < data.length; i++) {\n            let item = data[i];\n            if (item && typeof item === 'object') {\n                // 分类页特征：对象包含 data 属性（指向书籍索引数组）且包含 pages 分页属性\n                if (item.data !== undefined && item.pages !== undefined) {\n                    let potentialList = data[item.data];\n                    if (Array.isArray(potentialList) && potentialList.length > 0) {\n                        bookListIndices = potentialList;\n                        break;\n                    }\n                }\n            }\n        }\n\n        // --- 备选寻址（如果上面没找到） ---\n        if (bookListIndices.length === 0) {\n            for (let i = 0; i < data.length; i++) {\n                if (Array.isArray(data[i]) && data[i].length > 3) {\n                    let first = data[data[i][0]];\n                    // 只要数组里第一个元素指向的东西有标题或ID，就认定是书籍数组\n                    if (first && typeof first === 'object' && (first.title || first.id)) {\n                        bookListIndices = data[i];\n                        break;\n                    }\n                }\n            }\n        }\n\n        return bookListIndices.map(idx => {\n            let b = data[idx];\n            if (!b || typeof b !== 'object') return null;\n\n            let title = getV(b.title);\n            let author = getV(b.author);\n            let teller = getV(b.teller);\n            let cover = getV(b.cover_url) || getV(b.cover);\n            \n            // 组合作者和演播\n            let displayAuthor = author;\n            if (teller && teller !== author && teller !== \"佚名\") {\n                displayAuthor = author + \" (\" + teller + \")\";\n            }\n\n            return {\n                name: title,\n                auth: displayAuthor || \"未知\",\n                pic: cover,\n                intro: getV(b.desc),\n                cat: b.categoryName ? getV(b.categoryName) : (b.status === 99 ? \"连载\" : \"完结\"),\n                count: (b.count || b.chapterTotal || \"\") + \"期\",\n                url: \"/albums/\" + getV(b.id)\n            };\n        }).filter(b => b && b.name);\n    } catch (e) {\n        return [];\n    }\n})()",
+            "bookUrl": "url",
+            "coverUrl": "pic",
+            "kind": "cat",
+            "name": "name"
+        },
+        "ruleSearch": {
+            "author": "author",
+            "bookList": "@js:\n(function() {\n    try {\n        // 1. 提取 JSON 字符串并解析\n        const match = result.match(/id=\"__NUXT_DATA__\"[^>]*>([\\s\\S]+?)<\\/script>/);\n        if (!match) return [];\n        const data = JSON.parse(match[1]);\n\n        // 2. 定位搜索结果列表在数组中的位置\n        // 观察数据：{\"searchResults\":4} -> index 4 是 {\"list\":5} -> index 5 是索引数组 [6, 16...]\n        let bookIndices = [];\n        for (let i = 0; i < data.length; i++) {\n            if (data[i] && typeof data[i] === 'object' && data[i].list !== undefined && Array.isArray(data[data[i].list])) {\n                bookIndices = data[data[i].list];\n                break;\n            }\n        }\n\n        // 3. 遍历索引还原书籍对象\n        return bookIndices.map(idx => {\n            const item = data[idx];\n            if (!item) return null;\n\n            // 还原逻辑：字段对应的值是 data 数组中的索引\n            return {\n                title: data[item.title] || \"\",\n                author: data[item.author] || data[item.teller] || \"未知\",\n                desc: data[item.desc] || \"\",\n                cover: data[item.cover] || \"\",\n                cat: data[item.categoryName] || \"\",\n                status: item.status === 1 ? \"连载\" : \"完结\",\n                count: (item.chapterTotal || \"\") + \"期\",\n                url: \"/albums/\" + data[item.id]\n            };\n        }).filter(b => b !== null);\n    } catch (e) {\n        return [];\n    }\n})()",
+            "bookUrl": "url",
+            "checkKeyWord": "剑来",
+            "coverUrl": "cover",
+            "intro": "",
+            "kind": "cat",
+            "lastChapter": "",
+            "name": "title"
+        },
+        "ruleToc": {
+            "chapterList": "@js:\n(function(){\n    try {\n        // 1. 获取详情页源码，提取底层 Nuxt 数据\n        var match = String(result).match(/id=\"__NUXT_DATA__\"[^>]*>([\\s\\S]+?)<\\/script>/);\n        if (!match) return [{name: \"未找到底层数据\", url: \"\"}];\n        \n        var data = JSON.parse(match[1]);\n        var list = [];\n        \n        // 2. 从当前页面链接中提取书籍 ID\n        var bookMatch = baseUrl.match(/albums\\/(\\d+)/);\n        var bookId = bookMatch ? bookMatch[1] : \"\";\n\n        var seen = {}; // 用于去重\n        \n        // 3. 遍历底层数组，寻找所有“章节”特征对象\n        for (var i = 0; i < data.length; i++) {\n            var item = data[i];\n            \n            // 章节对象的特征：包含 title, id, index (序号)\n            if (item && typeof item === 'object' && 'title' in item && 'id' in item && 'index' in item) {\n                var chId = data[item.id];\n                var chTitle = data[item.title];\n                var chIndex = data[item.index]; // 真实的集数序号，如 1, 2, 3\n\n                // 拦截无效数据并去重\n                if (chId && chTitle && typeof chTitle === 'string' && !seen[chId]) {\n                     seen[chId] = true;\n                     list.push({\n                         name: chTitle,\n                         // 拼凑出标准的音频播放页链接\n                         url: \"https://www.tingyou.fm/audios/\" + bookId + \"/\" + chIndex,\n                         sortIdx: chIndex // 记录序号用于排序\n                     });\n                }\n            }\n        }\n        \n        // 4. 按真实的集数序号从小到大排序，防止乱序\n        list.sort(function(a, b){ return a.sortIdx - b.sortIdx; });\n\n        return list;\n    } catch(e) {\n        return [{name: \"解析崩溃: \" + e.message, url: \"\"}];\n    }\n})()",
+            "chapterName": "name",
+            "chapterUrl": "url"
+        },
+        "searchUrl": "https://www.tingyou.fm/search/result?keyword={{key}}&page={{page}}",
+        "weight": 0
+    }
+]
