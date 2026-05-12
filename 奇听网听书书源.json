@@ -1,0 +1,57 @@
+[
+    {
+        "bookSourceGroup": "听书",
+        "bookSourceName": "奇听网",
+        "bookSourceType": 1,
+        "bookSourceUrl": "https://www.qiting.cc",
+        "customOrder": 0,
+        "enabled": true,
+        "enabledCookieJar": false,
+        "enabledExplore": true,
+        "exploreUrl": "玄幻奇幻::/book/xhqh/lastupdate/{{page}}.html\n影视原著::/book/ysyz/lastupdate/{{page}}.html\n武侠仙侠::/book/wxxx/lastupdate/{{page}}.html\n长篇评书::/book/pingshu/lastupdate/{{page}}.html\n穿越架空::/book/cyjk/lastupdate/{{page}}.html\n悬疑推理::/book/xytl/lastupdate/{{page}}.html\n科幻竞技::/book/khjj/lastupdate/{{page}}.html\n历史军事::/book/lsjs/lastupdate/{{page}}.html\n现代言情::/book/xdyq/lastupdate/{{page}}.html\n青春校园::/book/qcxy/lastupdate/{{page}}.html\n幻想言情::/book/hxyq/lastupdate/{{page}}.html\n古代言情::/book/gdyq/lastupdate/{{page}}.html\n文学名著::/book/wxmz/lastupdate/{{page}}.html\n乡村生活::/book/xcsh/lastupdate/{{page}}.html\n儿童频道::/book/ertong/lastupdate/{{page}}.html\n国学经典::/book/gxjd/lastupdate/{{page}}.html\n博闻杂谈::/book/bxzt/lastupdate/{{page}}.html\n职场干货::/book/zcgh/lastupdate/{{page}}.html\n名家传记::/book/mjcj/lastupdate/{{page}}.html\n档案纪实::/book/dajs/lastupdate/{{page}}.html\n相声曲艺::/book/xsqy/lastupdate/{{page}}.html\n自我提升::/book/zwts/lastupdate/{{page}}.html\n明星电台::/book/mxdt/lastupdate/{{page}}.html\n其他有声::/book/qita/lastupdate/{{page}}.html",
+        "header": "{\"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\",\"Accept-Language\": \"zh-CN,zh;q=0.9\"}",
+        "lastUpdateTime": 1778542968482,
+        "respondTime": 180000,
+        "ruleBookInfo": {
+            "author": "//dd[span/text()='演播：']/a/text()",
+            "coverUrl": "img.lazy@data-original",
+            "intro": "class.book-des@html",
+            "kind": "//dd[span/text()='类型：']/a/text(),//i[contains(@class, 'state')]/text()",
+            "lastChapter": "id.playlist@tag.li.0@tag.a@text",
+            "name": "h1.book-title@text",
+            "tocUrl": "class.dirurl@href@js: result ? result + \",{'webView': true}\" : \"\"",
+            "wordCount": "//dd[span/text()='时长：']/text()"
+        },
+        "ruleContent": {
+            "content": "<js>result</js>",
+            "sourceRegex": ".*\\.(mp3|m4a).*"
+        },
+        "ruleExplore": {
+            "author": "class.book-author@tag.a@text",
+            "bookList": "class.list-works@tag.li",
+            "bookUrl": "class.list-book-dt@tag.a@href",
+            "coverUrl": "img.lazy@data-original",
+            "intro": "class.list-book-des@text",
+            "lastChapter": "class.book-zt@text",
+            "name": "class.list-book-dt@tag.a@text"
+        },
+        "ruleSearch": {
+            "author": "class.book-author@tag.a@text",
+            "bookList": "class.list-works@tag.li",
+            "bookUrl": "class.list-book-dt@tag.a@href",
+            "checkKeyWord": "遮天",
+            "coverUrl": "img.lazy@data-original",
+            "intro": "class.list-book-des@text",
+            "lastChapter": "class.book-zt@text",
+            "name": "class.list-book-dt@tag.a@text"
+        },
+        "ruleToc": {
+            "chapterList": "//div[@id='playlist']//li",
+            "chapterName": "//a/text()",
+            "chapterUrl": "//a/@href@js: \"https://m.qiting.cc\" + result + \",{'webView': true, 'sniff': true}\"",
+            "nextTocUrl": "//li[contains(@class, 'js_chapter_item')]/a[contains(@href, '?page=')]/@href"
+        },
+        "searchUrl": "https://www.qiting.cc/search.html,{\"method\": \"POST\", \"body\": \"searchword={{key}}\"}",
+        "weight": 0
+    }
+]
