@@ -1,0 +1,51 @@
+[
+    {
+        "bookSourceGroup": "漫画",
+        "bookSourceName": "猕猴桃",
+        "bookSourceType": 0,
+        "bookSourceUrl": "https://mwuu.cc/",
+        "customOrder": 0,
+        "enabled": true,
+        "enabledCookieJar": false,
+        "enabledExplore": true,
+        "exploreUrl": "全部::/cate?page={{page}}\n热血::/cate/hotblooded?page={{page}}\n玄幻::/cate/xuanhuan?page={{page}}\n恋爱::/cate/romance?page={{page}}\n冒险::/cate/adventure?page={{page}}\n古风::/cate/historical?page={{page}}\n都市::/cate/urban?page={{page}}\n穿越::/cate/transmigration?page={{page}}\n奇幻::/cate/fantasy?page={{page}}\n搞笑::/cate/comedy?page={{page}}\n少男::/cate/shounen?page={{page}}\n战斗::/cate/action?page={{page}}\n重生::/cate/rebirth?page={{page}}\n逆袭::/cate/counterattack?page={{page}}\n爆笑::/cate/hilarious?page={{page}}\n少年::/cate/youth?page={{page}}\n系统::/cate/system?page={{page}}\nBL::/cate/bl?page={{page}}\n韩漫::/cate/manhwa?page={{page}}\n完整版::/cate/fullversion?page={{page}}\n19r::/cate/19plus?page={{page}}\n台版::/cate/taiwanver?page={{page}}",
+        "header": "{\n  \"User-Agent\": \"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36\"\n}",
+        "lastUpdateTime": 1778822438505,
+        "respondTime": 180000,
+        "ruleBookInfo": {
+            "author": "#author-container a@text",
+            "coverUrl": ".comic-cover@src",
+            "lastChapter": "#newch@text",
+            "name": ".comic-title@text",
+            "tocUrl": ""
+        },
+        "ruleContent": {
+            "content": "@js:\n(function(){\n    var count = 60;\n    var dateStr = \"202507\"; \n    \n    // 提取目录传来的参数\n    var cParam = baseUrl.match(/count=(\\d+)/);\n    if(cParam) count = parseInt(cParam[1]);\n    \n    var dParam = baseUrl.match(/date=(\\d+)/);\n    if(dParam) dateStr = dParam[1];\n\n    var idMatch = baseUrl.match(/\\/comic\\/(\\d+)\\/(\\d+)/);\n    if(!idMatch) return \"解析链接 ID 失败\";\n    var comicId = idMatch[1];\n    var chapterId = idMatch[2];\n\n    // 构建 CDN 基础路径\n    var imgBase = \"https://fm.mwtt.cc/\" + dateStr + \"/\" + comicId + \"/\" + chapterId;\n    \n    var ua = \"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36\";\n    var cleanRef = baseUrl.split('?')[0]; \n    var header = ',{\"headers\":{\"Referer\":\"' + cleanRef + '\",\"User-Agent\":\"' + ua + '\"}}';\n\n    var res = [];\n    // 循环生成图片，多生成5张做容错\n    for(var i = 0; i <= count + 5; i++) {\n        res.push('<img src=\"' + imgBase + '/' + i + '.jpg' + header + '\">');\n    }\n    \n    return res.join(\"\\n\");\n})();",
+            "imageStyle": "FULL"
+        },
+        "ruleExplore": {
+            "bookList": ".books-row .item",
+            "bookUrl": "a@href",
+            "coverUrl": ".thumb_img@data-src",
+            "kind": ".desc@text",
+            "name": ".title@text"
+        },
+        "ruleSearch": {
+            "author": "author",
+            "bookList": "$.data.list",
+            "bookUrl": "/comic/{{$.id}}",
+            "checkKeyWord": "万界守门人",
+            "coverUrl": "cover",
+            "intro": "description",
+            "kind": "tags",
+            "name": "title"
+        },
+        "ruleToc": {
+            "chapterList": "#chapter-grid-container .chapter-item",
+            "chapterName": ".chapter-name@text",
+            "chapterUrl": "@js:\n(function(){\n    var url = java.getString(\"@href\");\n    var metaText = java.getString(\".chapter-meta@text\"); \n\n    var countMatch = metaText.match(/(\\d+)\\s*图/);\n    var count = countMatch ? countMatch[1] : \"50\";\n\n    var dateMatch = metaText.match(/(\\d{4})-(\\d{2})/);\n    var date = dateMatch ? (dateMatch[1] + dateMatch[2]) : \"202504\";\n\n    return url + \"?count=\" + count + \"&date=\" + date;\n})();"
+        },
+        "searchUrl": "https://mwuu.cc/api/search?type=mh&page={{page}}&pageSize=20&keyword={{key}}",
+        "weight": 0
+    }
+]
