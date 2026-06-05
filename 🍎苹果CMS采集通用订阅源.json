@@ -19,6 +19,6 @@
         "sourceGroup": "影视",
         "sourceIcon": "https://c-ssl.dtstatic.com/uploads/blog/202309/22/GgSb5GLzidPVw6g.thumb.400_0.jpg",
         "sourceName": "苹果MCS通用JSON接口API",
-        "sourceUrl": "json采集接口，如:\n\nhttps://subocj.com/api.php/provide/vod/"
+        "sourceUrl": "https://subocj.com/api.php/provide/vod/"
     }
 ]
