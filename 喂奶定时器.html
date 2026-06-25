@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>喂奶计时器</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f5f0eb; color: #333; display: flex; flex-direction: column; height: 100vh; overflow: hidden; transition: background 0.3s; }
+    body.alarming { background: #ffebee; }
+    .tabs { display: flex; background: #fff; border-bottom: 2px solid #ddd; }
+    .tab { flex: 1; text-align: center; padding: 16px 0; font-size: 18px; font-weight: 600; color: #888; cursor: pointer; transition: .2s; border-bottom: 3px solid transparent; }
+    .tab.active { color: #e07a5f; border-bottom-color: #e07a5f; }
+    .page { display: none; flex: 1; overflow-y: auto; padding: 20px; }
+    .page.active { display: block; }
+    .card { background: #fff; border-radius: 20px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .time-set { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .time-set input { flex: 1; min-width: 80px; padding: 12px; font-size: 20px; text-align: center; border: 2px solid #ddd; border-radius: 12px; outline: none; }
+    .time-set input:focus { border-color: #e07a5f; }
+    .time-set span { font-size: 18px; font-weight: 500; }
+    .btn { padding: 14px 28px; border: none; border-radius: 30px; font-size: 18px; font-weight: 600; cursor: pointer; transition: .2s; }
+    .btn-primary { background: #e07a5f; color: #fff; }
+    .btn-primary:active { background: #c96a51; }
+    .btn-feed { width: 100%; padding: 24px; font-size: 28px; background: #81b29a; color: #fff; margin-top: 16px; }
+    .btn-feed:active { background: #6b9b82; }
+    .timer { font-size: 52px; text-align: center; font-weight: 700; color: #e07a5f; margin: 20px 0; }
+    .record-list { list-style: none; }
+    .record-item { padding: 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .record-left { display: flex; flex-direction: column; gap: 4px; }
+    .record-time { font-size: 16px; }
+    .record-interval { font-size: 13px; color: #888; }
+    .record-detail { font-size: 13px; color: #666; margin-top: 2px; }
+    .record-type { font-size: 14px; background: #eee; padding: 4px 12px; border-radius: 20px; }
+    .record-type.auto { background: #f2cc8f; color: #fff; }
+    .record-type.manual { background: #81b29a; color: #fff; }
+    .record-type.breast { background: #f4a261; color: #fff; }
+    .record-type.formula { background: #a8dadc; color: #333; }
+    .empty { text-align: center; color: #999; padding: 40px; }
+    .clear-btn { margin-top: 16px; background: none; color: #999; text-decoration: underline; font-size: 14px; cursor: pointer; }
+    .permission-warning { background: #fff3cd; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; color: #856404; display: none; }
+    .alarm-indicator { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: #e07a5f; animation: pulse 0.5s infinite; display: none; z-index: 10; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
+    body.alarming .alarm-indicator { display: block; }
+    .toast-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .toast-box { background: #fff; padding: 40px; border-radius: 20px; text-align: center; }
+    .toast-box h2 { margin-bottom: 20px; color: #e07a5f; }
+    .toast-box button { margin-top: 20px; padding: 14px 40px; background: #81b29a; color: #fff; border: none; border-radius: 30px; font-size: 18px; cursor: pointer; }
+    .feed-options { display: flex; gap: 10px; margin-top: 16px; align-items: center; }
+    .feed-options label { font-size: 16px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .feed-options input[type="radio"] { display: none; }
+    .feed-type-btn { padding: 8px 16px; border-radius: 20px; background: #eee; color: #666; transition: .2s; font-size: 16px; }
+    .feed-type-btn.active { background: #f4a261; color: #fff; }
+    .feed-type-btn.formula-active { background: #a8dadc; color: #333; }
+    .volume-input { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+    .volume-input input { flex: 1; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 12px; outline: none; text-align: center; }
+    .volume-input input:focus { border-color: #e07a5f; }
+    .volume-input span { font-size: 16px; font-weight: 500; }
+    .volume-input.disabled { opacity: 0.5; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="alarm-indicator"></div>
+  <div class="tabs">
+    <div class="tab active" data-tab="timer">⏱️ 计时 & 喂奶</div>
+    <div class="tab" data-tab="records">📋 记录</div>
+  </div>
+
+  <div id="page-timer" class="page active">
+    <div class="card">
+      <div class="permission-warning" id="permissionWarning"></div>
+      <div style="font-size:18px; font-weight:600; margin-bottom:12px;">⏰ 自定义间隔（分钟）</div>
+      <div class="time-set">
+        <input type="number" id="intervalInput" min="1" max="1440" value="180" placeholder="分钟">
+        <span>分钟</span>
+        <button class="btn btn-primary" id="setIntervalBtn">设置并开始</button>
+      </div>
+      <div class="timer" id="countdownDisplay">--:--:--</div>
+      <div style="text-align:center; color:#666; font-size:14px;">下次定时喂奶倒计时</div>
+
+      <div class="feed-options">
+        <span style="font-weight:600;">喂奶类型：</span>
+        <label>
+          <input type="radio" name="feedType" value="breast" id="feedTypeBreast">
+          <span class="feed-type-btn" id="breastLabel">🤱 母乳</span>
+        </label>
+        <label>
+          <input type="radio" name="feedType" value="formula" id="feedTypeFormula" checked>
+          <span class="feed-type-btn formula-active" id="formulaLabel">🍼 配方奶</span>
+        </label>
+      </div>
+
+      <div class="volume-input" id="volumeInputContainer">
+        <input type="number" id="volumeInput" min="0" value="" placeholder="本次喂奶量 (ml)">
+        <span>ml</span>
+      </div>
+      <button class="btn btn-feed" id="feedNowBtn">🍼 现在喂奶</button>
+    </div>
+  </div>
+
+  <div id="page-records" class="page">
+    <div style="font-size:20px; font-weight:600; margin-bottom:16px;">📋 喂奶记录</div>
+    <ul class="record-list" id="recordList"></ul>
+    <div class="empty" id="emptyMsg">暂无记录</div>
+    <button class="clear-btn" id="clearRecordsBtn">清除所有记录</button>
+  </div>
+
+  <audio id="alarmAudio" preload="auto" loop>
+    <source src="alarm.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    (function() {
+      const STORAGE_KEY = 'feeding_records';
+      const SETTINGS_KEY = 'feeding_settings';
+
+      function loadRecords() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
+      }
+      function saveRecords(records) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      }
+      function loadSettings() {
+        try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch { return {}; }
+      }
+      function saveSettings(settings) {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      }
+
+      let records = loadRecords();
+      let settings = loadSettings();
+      let countdownInterval = null;
+      let nextFeedTime = settings.nextFeedTime || null;
+
+      const tabTimer = document.querySelector('[data-tab="timer"]');
+      const tabRecords = document.querySelector('[data-tab="records"]');
+      const pageTimer = document.getElementById('page-timer');
+      const pageRecords = document.getElementById('page-records');
+      const intervalInput = document.getElementById('intervalInput');
+      const setIntervalBtn = document.getElementById('setIntervalBtn');
+      const countdownDisplay = document.getElementById('countdownDisplay');
+      const feedNowBtn = document.getElementById('feedNowBtn');
+      const volumeInput = document.getElementById('volumeInput');
+      const volumeInputContainer = document.getElementById('volumeInputContainer');
+      const recordList = document.getElementById('recordList');
+      const emptyMsg = document.getElementById('emptyMsg');
+      const clearRecordsBtn = document.getElementById('clearRecordsBtn');
+      const permissionWarning = document.getElementById('permissionWarning');
+      const alarmAudio = document.getElementById('alarmAudio');
+      const feedTypeBreast = document.getElementById('feedTypeBreast');
+      const feedTypeFormula = document.getElementById('feedTypeFormula');
+      const breastLabel = document.getElementById('breastLabel');
+      const formulaLabel = document.getElementById('formulaLabel');
+
+      intervalInput.value = settings.intervalMinutes || 180;
+
+      // 喂奶类型切换 UI
+      function updateFeedTypeUI() {
+        if (feedTypeBreast.checked) {
+          breastLabel.classList.add('active');
+          breastLabel.classList.remove('formula-active');
+          formulaLabel.classList.remove('active', 'formula-active');
+          volumeInputContainer.classList.add('disabled');
+          volumeInput.value = '';
+        } else {
+          formulaLabel.classList.add('formula-active');
+          formulaLabel.classList.remove('active');
+          breastLabel.classList.remove('active', 'formula-active');
+          volumeInputContainer.classList.remove('disabled');
+        }
+      }
+      feedTypeBreast.addEventListener('change', updateFeedTypeUI);
+      feedTypeFormula.addEventListener('change', updateFeedTypeUI);
+      // 初始化
+      updateFeedTypeUI();
+
+      // 音频解锁
+      let audioUnlocked = false;
+      function unlockAudio() {
+        if (audioUnlocked) return;
+        try {
+          const p = alarmAudio.play();
+          if (p !== undefined) {
+            p.then(() => {
+              alarmAudio.pause();
+              alarmAudio.currentTime = 0;
+            }).catch(() => {});
+          }
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          if (ctx.state === 'suspended') ctx.resume();
+          audioUnlocked = true;
+          document.removeEventListener('click', unlockAudio);
+          document.removeEventListener('touchstart', unlockAudio);
+        } catch(e) {}
+      }
+      document.addEventListener('click', unlockAudio);
+      document.addEventListener('touchstart', unlockAudio);
+
+      function playAlarmSound() {
+        try {
+          alarmAudio.currentTime = 0;
+          alarmAudio.play().catch(() => {
+            try {
+              const ctx = new (window.AudioContext || window.webkitAudioContext)();
+              if (ctx.state === 'suspended') ctx.resume();
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'square';
+              osc.frequency.setValueAtTime(800, ctx.currentTime);
+              osc.frequency.linearRampToValueAtTime(1200, ctx.currentTime + 0.1);
+              gain.gain.setValueAtTime(0.5, ctx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 2);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(ctx.currentTime);
+              osc.stop(ctx.currentTime + 2);
+            } catch(e2) {}
+          });
+        } catch(e) {}
+      }
+
+      function stopAlarmSound() {
+        alarmAudio.pause();
+        alarmAudio.currentTime = 0;
+      }
+
+      let notificationHandle = null;
+      let titleFlashInterval = null;
+      let renotifyInterval = null;
+      const originalTitle = document.title;
+
+      function clearAllAlerts() {
+        if (notificationHandle) notificationHandle.close();
+        notificationHandle = null;
+        if (renotifyInterval) clearInterval(renotifyInterval);
+        renotifyInterval = null;
+        if (titleFlashInterval) clearInterval(titleFlashInterval);
+        titleFlashInterval = null;
+        document.title = originalTitle;
+        document.body.classList.remove('alarming');
+        const toast = document.querySelector('.toast-overlay');
+        if (toast) toast.remove();
+        stopAlarmSound();
+      }
+
+      function showFallbackModal() {
+        if (Notification.permission !== 'granted') {
+          const overlay = document.createElement('div');
+          overlay.className = 'toast-overlay';
+          overlay.innerHTML = `
+            <div class="toast-box">
+              <h2>🍼 喂奶时间到！</h2>
+              <p>宝宝该喂奶了</p>
+              <button id="closeAlarmBtn">我知道了</button>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+          document.getElementById('closeAlarmBtn').onclick = () => {
+            overlay.remove();
+            clearAllAlerts();
+          };
+        }
+      }
+
+      function triggerNotificationLoop() {
+        if (Notification.permission === 'granted') {
+          function show() {
+            try {
+              notificationHandle = new Notification('🍼 喂奶时间到！', {
+                body: '宝宝该喂奶了，已经超时！',
+                icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🍼</text></svg>',
+                vibrate: [500, 200, 500, 200, 500],
+                requireInteraction: true,
+                tag: 'feeding-alarm',
+                renotify: true
+              });
+              notificationHandle.onclick = () => {
+                window.focus();
+                clearAllAlerts();
+              };
+            } catch(e) {
+              showFallbackModal();
+            }
+          }
+          show();
+          renotifyInterval = setInterval(show, 5000);
+        } else {
+          showFallbackModal();
+        }
+
+        let flash = true;
+        titleFlashInterval = setInterval(() => {
+          document.title = flash ? '🔔 喂奶！！' : '⏰ 该喂奶了！';
+          flash = !flash;
+        }, 800);
+
+        document.body.classList.add('alarming');
+      }
+
+      function triggerAlarm() {
+        if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500]);
+        playAlarmSound();
+        triggerNotificationLoop();
+      }
+
+      function stopAlarm() {
+        if (navigator.vibrate) navigator.vibrate(0);
+        clearAllAlerts();
+      }
+
+      async function requestNotificationPermission() {
+        if (!('Notification' in window)) {
+          permissionWarning.textContent = '当前浏览器不支持通知，将使用全屏提醒替代。';
+          permissionWarning.style.display = 'block';
+          return;
+        }
+        if (Notification.permission === 'default') {
+          await Notification.requestPermission();
+        }
+        if (Notification.permission !== 'granted') {
+          permissionWarning.textContent = '通知权限未开启，将以全屏提示提醒您。';
+          permissionWarning.style.display = 'block';
+        } else {
+          permissionWarning.style.display = 'none';
+        }
+      }
+      requestNotificationPermission();
+
+      function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        if (tab === 'timer') {
+          tabTimer.classList.add('active');
+          pageTimer.classList.add('active');
+        } else {
+          tabRecords.classList.add('active');
+          pageRecords.classList.add('active');
+          renderRecords();
+        }
+      }
+      tabTimer.addEventListener('click', () => switchTab('timer'));
+      tabRecords.addEventListener('click', () => switchTab('records'));
+
+      function formatDuration(ms) {
+        if (ms < 0) return '';
+        const mins = Math.floor(ms / 60000);
+        const hours = Math.floor(mins / 60);
+        const remainMins = mins % 60;
+        if (hours > 0) return `${hours}小时${remainMins}分钟`;
+        return `${remainMins}分钟`;
+      }
+
+      // 添加记录：包含 feedType 和 volume
+      function addRecord(type, feedType, volume = null) {
+        const now = new Date();
+        const prev = records.length > 0 ? new Date(records[0].time) : null;
+        const diff = prev ? formatDuration(now - prev) : '';
+        records.unshift({ type, time: now.toISOString(), diff, feedType, volume });
+        saveRecords(records);
+        renderRecords();
+      }
+
+      function renderRecords() {
+        recordList.innerHTML = '';
+        if (records.length === 0) {
+          emptyMsg.style.display = 'block';
+          return;
+        }
+        emptyMsg.style.display = 'none';
+        records.forEach(r => {
+          const date = new Date(r.time);
+          const timeStr = date.toLocaleString('zh-CN', { hour12: false });
+          const typeLabel = r.type === 'auto' ? '⏰ 定时' : '🍼 手动';
+          const intervalStr = r.diff ? `距上次: ${r.diff}` : '';
+          const feedTypeStr = r.feedType === 'breast' ? '🤱 母乳' : '🍼 配方奶';
+          const volumeStr = r.volume ? ` | ${r.volume} ml` : '';
+          const detailStr = `${feedTypeStr}${volumeStr}`;
+          const li = document.createElement('li');
+          li.className = 'record-item';
+          li.innerHTML = `
+            <div class="record-left">
+              <span class="record-time">${timeStr}</span>
+              ${intervalStr ? `<span class="record-interval">${intervalStr}</span>` : ''}
+              <span class="record-detail">${detailStr}</span>
+            </div>
+            <span class="record-type ${r.type}">${typeLabel}</span>
+          `;
+          recordList.appendChild(li);
+        });
+      }
+
+      clearRecordsBtn.addEventListener('click', () => {
+        if (confirm('确定清除所有记录吗？')) {
+          records = [];
+          saveRecords(records);
+          renderRecords();
+        }
+      });
+
+      function stopCountdown() {
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+          countdownInterval = null;
+        }
+      }
+
+      function updateDisplay() {
+        if (!nextFeedTime) {
+          countdownDisplay.textContent = '--:--:--';
+          return;
+        }
+        const remaining = nextFeedTime - Date.now();
+        if (remaining <= 0) {
+          countdownDisplay.textContent = '00:00:00';
+          return;
+        }
+        const h = Math.floor(remaining / 3600000);
+        const m = Math.floor((remaining % 3600000) / 60000);
+        const s = Math.floor((remaining % 60000) / 1000);
+        countdownDisplay.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      }
+
+      function startCountdown() {
+        stopCountdown();
+        if (!nextFeedTime) return;
+        countdownInterval = setInterval(() => {
+          const now = Date.now();
+          const remaining = nextFeedTime - now;
+          updateDisplay();
+          if (remaining <= 0) {
+            stopCountdown();
+            triggerAlarm();
+            // 定时喂奶默认记录为配方奶
+            addRecord('auto', 'formula', null);
+            nextFeedTime = now + (settings.intervalMinutes || 180) * 60_000;
+            settings.nextFeedTime = nextFeedTime;
+            saveSettings(settings);
+            startCountdown();
+          }
+        }, 200);
+      }
+
+      feedNowBtn.addEventListener('click', () => {
+        stopAlarm();
+        const feedType = feedTypeBreast.checked ? 'breast' : 'formula';
+        const vol = feedType === 'formula' ? (volumeInput.value ? parseInt(volumeInput.value, 10) : null) : null;
+        addRecord('manual', feedType, vol);
+        if (navigator.vibrate) navigator.vibrate(200);
+        if (settings.intervalMinutes) {
+          nextFeedTime = Date.now() + settings.intervalMinutes * 60_000;
+          settings.nextFeedTime = nextFeedTime;
+          saveSettings(settings);
+          startCountdown();
+          updateDisplay();
+        }
+        // 清空容量
+        volumeInput.value = '';
+        // 保持当前类型选择不变
+      });
+
+      setIntervalBtn.addEventListener('click', () => {
+        const mins = parseInt(intervalInput.value, 10);
+        if (isNaN(mins) || mins < 1) {
+          alert('请输入有效的分钟数（≥1）');
+          return;
+        }
+        stopAlarm();
+        settings.intervalMinutes = mins;
+        nextFeedTime = Date.now() + mins * 60_000;
+        settings.nextFeedTime = nextFeedTime;
+        saveSettings(settings);
+        startCountdown();
+        updateDisplay();
+      });
+
+      // 恢复状态
+      if (settings.intervalMinutes && nextFeedTime && nextFeedTime > Date.now()) {
+        startCountdown();
+      } else if (settings.intervalMinutes) {
+        nextFeedTime = Date.now() + settings.intervalMinutes * 60_000;
+        settings.nextFeedTime = nextFeedTime;
+        saveSettings(settings);
+        startCountdown();
+      }
+      updateDisplay();
+      renderRecords();
+    })();
+  </script>
+</body>
+</html>
